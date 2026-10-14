@@ -1,0 +1,79 @@
+{
+ "args": {
+  "split": "valid",
+  "n": 100,
+  "methods": [
+   "eigencam",
+   "eigencam_p5",
+   "eigencam_centered",
+   "eigencam_fsum",
+   "gradcam",
+   "gradcampp",
+   "gradcampp_fmax",
+   "gradcampp_fsum",
+   "gradcampp_p5",
+   "gradcampp_p4",
+   "gradcampp_p3",
+   "gradcampp_contrast",
+   "layercam",
+   "layercam_fsum",
+   "layercam_p5",
+   "occlusion",
+   "drise",
+   "random",
+   "boxprior"
+  ],
+  "expensive": [
+   "drise"
+  ],
+  "n_expensive": 30,
+  "max_targets": 2,
+  "stability": false,
+  "sanity": false,
+  "n_diag": 150,
+  "diag_exclude": [
+   "drise"
+  ],
+  "tag": "dev",
+  "config": null
+ },
+ "config": {
+  "weights": "C:\\Users\\jaypa\\Desktop\\Jay\\Projects\\SnakeDetection_XAI\\best.pt",
+  "data_root": "C:\\Users\\jaypa\\Desktop\\Jay\\Projects\\SnakeDetection_XAI\\final_dataset_v4\\final_dataset_v4",
+  "data_yaml": "C:\\Users\\jaypa\\Desktop\\Jay\\Projects\\SnakeDetection_XAI\\final_dataset_v4\\final_dataset_v4\\data.yaml",
+  "results_dir": "C:\\Users\\jaypa\\Desktop\\Jay\\Projects\\SnakeDetection_XAI\\results",
+  "seed": 42,
+  "detector": {
+   "imgsz": 640,
+   "conf": 0.25,
+   "iou": 0.7,
+   "match_iou": 0.5
+  },
+  "xai": {
+   "occlusion": {
+    "patch_sizes": [
+     48,
+     96
+    ],
+    "stride_frac": 0.5,
+    "batch": 64
+   },
+   "drise": {
+    "n_masks": 2000,
+    "grid": 16,
+    "p": 0.5,
+    "batch": 64
+   }
+  },
+  "eval": {
+   "steps": 50,
+   "deletion_fill": "gray",
+   "insertion_start": "blur",
+   "blur_sigma": 25,
+   "pointing_tolerance": 15,
+   "topk_frac": 0.2,
+   "noise_std": 0.02
+  }
+ },
+ "torch": "2.14.1+cu126"
+}

@@ -1,0 +1,40 @@
+# --- Python environment (machine-specific, rebuild from requirements.txt) ---
+.venv/
+venv/
+env/
+
+# --- Python caches / build artifacts ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# --- Dataset (23k images, share separately e.g. via Drive) ---
+final_dataset_v4/
+data/
+*.cache
+
+# --- Large / regenerable results (summary tables, analysis and figures stay tracked) ---
+results/**/*.log
+results/*.log
+results/detector_eval/gallery_*/
+results/detector_eval/ultralytics_*/
+results/detector_eval/data_resolved.yaml
+results/xai_verification/*.done
+results/xai_bench/*_pytest_*/
+results/xai_bench/valid_smoke/
+
+# --- Ultralytics default output folders ---
+runs/
+
+# --- IDE / OS ---
+.vscode/
+.idea/
+.claude/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini

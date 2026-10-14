@@ -1,0 +1,4 @@
+,pred snake,pred snake_like_object,pred background
+GT snake,956,4,178
+GT snake_like_object,7,1100,263
+GT background,124,239,0

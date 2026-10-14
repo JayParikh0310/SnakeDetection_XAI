@@ -1,0 +1,156 @@
+{
+ "weights": "C:\\Users\\jaypa\\Desktop\\Jay\\Projects\\SnakeDetection_XAI\\best.pt",
+ "device": "cuda",
+ "gpu": "NVIDIA GeForce RTX 4060 Laptop GPU",
+ "ultralytics_valid": {
+  "split": "valid",
+  "mAP50": 0.8877713952650645,
+  "mAP50-95": 0.6168013221369649,
+  "precision": 0.8837545639679163,
+  "recall": 0.8110323122074152,
+  "snake": {
+   "precision": 0.8986906475283682,
+   "recall": 0.8340695370299137,
+   "AP50": 0.9165585912523382,
+   "AP50-95": 0.6092498658771686
+  },
+  "snake_like_object": {
+   "precision": 0.8688184804074642,
+   "recall": 0.7879950873849169,
+   "AP50": 0.8589841992777909,
+   "AP50-95": 0.6243527783967614
+  },
+  "speed_ms": {
+   "preprocess": 0.3176883514155848,
+   "inference": 3.557163812082885,
+   "loss": 0.0012725133716401475,
+   "postprocess": 2.8173987565881147
+  }
+ },
+ "analysis_valid": {
+  "split": "valid",
+  "conf": 0.25,
+  "counts": {
+   "TP": 2056,
+   "FP": 363,
+   "FN": 441,
+   "confusion": 11
+  },
+  "per_class": {
+   "snake": {
+    "gt": 1138,
+    "TP": 956,
+    "recall": 0.8400702987697716,
+    "confused_as_other": 4,
+    "missed": 178,
+    "FP_background": 124,
+    "precision": 0.8794848206071757
+   },
+   "snake_like_object": {
+    "gt": 1370,
+    "TP": 1100,
+    "recall": 0.8029197080291971,
+    "confused_as_other": 7,
+    "missed": 263,
+    "FP_background": 239,
+    "precision": 0.8190618019359642
+   }
+  },
+  "detector_latency_ms": {
+   "mean": 39.26298828119946,
+   "p50": 42.94840001966804
+  },
+  "confusion_matrix": {
+   "pred snake": {
+    "GT snake": 956,
+    "GT snake_like_object": 7,
+    "GT background": 124
+   },
+   "pred snake_like_object": {
+    "GT snake": 4,
+    "GT snake_like_object": 1100,
+    "GT background": 239
+   },
+   "pred background": {
+    "GT snake": 178,
+    "GT snake_like_object": 263,
+    "GT background": 0
+   }
+  }
+ },
+ "ultralytics_test": {
+  "split": "test",
+  "mAP50": 0.8650037819087085,
+  "mAP50-95": 0.6171734394503064,
+  "precision": 0.8339714927255102,
+  "recall": 0.7910970308019609,
+  "snake": {
+   "precision": 0.902737782823187,
+   "recall": 0.8506151142355008,
+   "AP50": 0.9252516631887848,
+   "AP50-95": 0.6265590857521103
+  },
+  "snake_like_object": {
+   "precision": 0.7652052026278333,
+   "recall": 0.7315789473684211,
+   "AP50": 0.8047559006286322,
+   "AP50-95": 0.6077877931485025
+  },
+  "speed_ms": {
+   "preprocess": 0.3365024966636272,
+   "inference": 4.414738049867975,
+   "loss": 0.0012644471636088508,
+   "postprocess": 3.1430797849911376
+  }
+ },
+ "analysis_test": {
+  "split": "test",
+  "conf": 0.25,
+  "counts": {
+   "TP": 756,
+   "FP": 163,
+   "FN": 193
+  },
+  "per_class": {
+   "snake": {
+    "gt": 569,
+    "TP": 489,
+    "recall": 0.859402460456942,
+    "confused_as_other": 0,
+    "missed": 80,
+    "FP_background": 46,
+    "precision": 0.914018691588785
+   },
+   "snake_like_object": {
+    "gt": 380,
+    "TP": 267,
+    "recall": 0.7026315789473684,
+    "confused_as_other": 0,
+    "missed": 113,
+    "FP_background": 117,
+    "precision": 0.6953125
+   }
+  },
+  "detector_latency_ms": {
+   "mean": 40.603349162443905,
+   "p50": 43.17414999241009
+  },
+  "confusion_matrix": {
+   "pred snake": {
+    "GT snake": 489,
+    "GT snake_like_object": 0,
+    "GT background": 46
+   },
+   "pred snake_like_object": {
+    "GT snake": 0,
+    "GT snake_like_object": 267,
+    "GT background": 117
+   },
+   "pred background": {
+    "GT snake": 80,
+    "GT snake_like_object": 113,
+    "GT background": 0
+   }
+  }
+ }
+}
