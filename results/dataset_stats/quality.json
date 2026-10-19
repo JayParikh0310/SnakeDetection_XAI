@@ -1,0 +1,159 @@
+{
+ "images": 23307,
+ "distinct_resolutions": 994,
+ "class_predictable_from_resolution": 0.9939503153559016,
+ "images_with_single_class_resolution": 0.7877032651134852,
+ "hash_candidates_before_pixel_check": 2521,
+ "near_duplicate_pairs_across_splits": 646,
+ "pairs_by_split": {
+  "train-valid": 614,
+  "test-valid": 7,
+  "test-train": 25
+ },
+ "test_images_with_near_duplicate_elsewhere": 20,
+ "test_share_with_near_duplicate": 0.023781212841854936,
+ "test_images_leaked": [
+  "snake_021197.jpg",
+  "snake_021257.jpg",
+  "snake_021278.jpg",
+  "snake_021344.jpg",
+  "snake_021366.jpg",
+  "snake_021541.jpg",
+  "snake_021559.jpg",
+  "snake_021600.jpg",
+  "snake_021659.jpg",
+  "snake_021672.jpg",
+  "snake_021675.jpg",
+  "snake_021690.jpg",
+  "snake_021693.jpg",
+  "snake_like_003820.jpg",
+  "snake_like_005102.jpg",
+  "snake_like_007674.jpg",
+  "snake_like_007691.jpg",
+  "snake_like_007694.jpg",
+  "snake_like_007696.jpg",
+  "snake_like_007697.jpg"
+ ],
+ "examples": [
+  [
+   [
+    "test",
+    "snake_021197.jpg"
+   ],
+   [
+    "train",
+    "snake_019129.jpg"
+   ]
+  ],
+  [
+   [
+    "test",
+    "snake_021197.jpg"
+   ],
+   [
+    "train",
+    "snake_019130.jpg"
+   ]
+  ],
+  [
+   [
+    "test",
+    "snake_021257.jpg"
+   ],
+   [
+    "train",
+    "snake_like_007623.jpg"
+   ]
+  ],
+  [
+   [
+    "test",
+    "snake_021278.jpg"
+   ],
+   [
+    "valid",
+    "snake_020647.jpg"
+   ]
+  ],
+  [
+   [
+    "test",
+    "snake_021344.jpg"
+   ],
+   [
+    "valid",
+    "snake_020474.jpg"
+   ]
+  ],
+  [
+   [
+    "test",
+    "snake_021366.jpg"
+   ],
+   [
+    "train",
+    "snake_013603.jpg"
+   ]
+  ],
+  [
+   [
+    "test",
+    "snake_021366.jpg"
+   ],
+   [
+    "train",
+    "snake_013604.jpg"
+   ]
+  ],
+  [
+   [
+    "test",
+    "snake_021541.jpg"
+   ],
+   [
+    "train",
+    "snake_017270.jpg"
+   ]
+  ],
+  [
+   [
+    "test",
+    "snake_021559.jpg"
+   ],
+   [
+    "train",
+    "snake_017592.jpg"
+   ]
+  ],
+  [
+   [
+    "test",
+    "snake_021600.jpg"
+   ],
+   [
+    "train",
+    "snake_018426.jpg"
+   ]
+  ],
+  [
+   [
+    "test",
+    "snake_021659.jpg"
+   ],
+   [
+    "valid",
+    "snake_020391.jpg"
+   ]
+  ],
+  [
+   [
+    "test",
+    "snake_021672.jpg"
+   ],
+   [
+    "train",
+    "snake_014181.jpg"
+   ]
+  ]
+ ]
+}

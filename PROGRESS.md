@@ -16,6 +16,16 @@ Statuses: `TODO` · `IN PROGRESS (A|B)` · `BLOCKED (reason)` · `DONE (date)`.
     **Use LayerCAM as the default explainer** (see the results). Offer occlusion as a slow "audit" option.
   - GPU rule: one GPU job at a time, nothing else on the GPU (see the CLAUDE.md gotchas).
 - **Blockers:** none.
+- **Review 2 deliverables** (objectives, dataset selection & understanding, methodology; no results, as
+  requested): `report/SnakeGuard_Review2.docx` (22 pages, incl. 30 anticipated questions with answers)
+  and the slides: **`report/SnakeGuard_Review2_15slides.pptx` (final, 15 slides)**, built by `report/build/make_pptx.js`. The older long deck `report/SnakeGuard_Review2.pptx` (25 slides, edited by hand) is kept; its generator is `make_pptx_full27.js`. Speaker script: `report/SnakeGuard_Review2_Script.docx` (15 slides, ~15 min), text in `report/build/script_slides15.js`, built by `make_script.js`. Generators: `report/build/make_docx.js`
+  and `make_pptx.js` (run with `NODE_PATH=report/build/node_modules`). Supporting analysis:
+  `scripts/dataset_stats.py`, `scripts/dataset_quality.py`.
+- **Dataset provenance** (asked for by the supervisor): `report/dataset_sources.md`. It contains the
+  composition reconstructed from the images (belts, fallen trees, fire-hose cabinets, pipes,
+  mangrove roots, underwater pipes / nooses, iNaturalist-style snakes + one 1080×1080 Roboflow snake
+  set) and the closest public source links. **TODO (dataset creator):** confirm the exact sources
+  from his Roboflow workspace and Kaggle download history, and update that file.
 
 ## Members & environments
 | Member | Machine / GPU | Python | Notes |

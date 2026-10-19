@@ -38,3 +38,7 @@ runs/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# report build tooling
+report/build/node_modules/
+report/build/render/
