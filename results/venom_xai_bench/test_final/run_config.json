@@ -1,0 +1,111 @@
+{
+ "args": {
+  "run": "results/venom_clf/b0_reg",
+  "split": "test",
+  "n_venomous_decision": 80,
+  "n_harmless_decision": 20,
+  "methods": [
+   "eigencam",
+   "gradcam",
+   "gradcampp",
+   "gradcampp_ms",
+   "layercam_ms",
+   "integrated_gradients",
+   "occlusion",
+   "rise",
+   "lime",
+   "kernelshap",
+   "random"
+  ],
+  "n_expensive": 80,
+  "n_diag": 80,
+  "tag": "final"
+ },
+ "venom_config": {
+  "seed": 42,
+  "snakeclef": {
+   "base_url": "http://ptak.felk.cvut.cz/plants/plants/SnakeCLEF2023",
+   "root": "/Users/ameenahsan/snakeguard-data/snakeclef",
+   "meta_dir": "/Users/ameenahsan/snakeguard-data/snakeclef/meta",
+   "image_dir": "/Users/ameenahsan/snakeguard-data/snakeclef/images",
+   "manifest": "/Users/ameenahsan/snakeguard-data/snakeclef/manifest.csv",
+   "archives": {
+    "train": "SnakeCLEF2023-train-small_size.tar.gz",
+    "val": "SnakeCLEF2023-val-small_size.tar.gz"
+   },
+   "metadata": {
+    "train": "SnakeCLEF2023-TrainMetadata-iNat.csv",
+    "val": "SnakeCLEF2023-ValMetadata.csv"
+   },
+   "venom_list": "venomous_status_list.csv",
+   "cap_venomous": 100,
+   "cap_harmless": 25,
+   "split_frac": {
+    "train": 0.7,
+    "valid": 0.15,
+    "test": 0.15
+   }
+  },
+  "train": {
+   "backbone": "efficientnet_b0",
+   "img_size": 224,
+   "epochs": 10,
+   "batch": 64,
+   "lr": 0.001,
+   "weight_decay": 0.05,
+   "warmup_epochs": 1,
+   "species_loss_weight": 0.5,
+   "label_smoothing": 0.1,
+   "venom_label_smoothing": 0.0,
+   "dropout": 0.2,
+   "crop_scale": [
+    0.35,
+    1.0
+   ],
+   "workers": 6,
+   "device": "auto",
+   "target_recall": 0.95,
+   "out_dir": "/Users/ameenahsan/Documents/SnakeDetection_XAI/results/venom_clf"
+  },
+  "xai": {
+   "occlusion": {
+    "patch_sizes": [
+     32,
+     64
+    ],
+    "stride_frac": 0.5,
+    "batch": 64
+   },
+   "rise": {
+    "n_masks": 1000,
+    "grid": 7,
+    "p": 0.5,
+    "batch": 64
+   },
+   "surrogate": {
+    "grid": 8,
+    "n_samples": 1000,
+    "batch": 64
+   },
+   "integrated_gradients": {
+    "steps": 32,
+    "sigma": 4.0,
+    "batch": 16
+   }
+  }
+ },
+ "eval": {
+  "steps": 50,
+  "deletion_fill": "gray",
+  "insertion_start": "blur",
+  "blur_sigma": 25,
+  "pointing_tolerance": 15,
+  "topk_frac": 0.2,
+  "noise_std": 0.02
+ },
+ "classifier": {
+  "score": "species",
+  "threshold": 0.1413489
+ },
+ "torch": "2.14.1"
+}

@@ -1,0 +1,66 @@
+{
+ "args": {
+  "tag": "b0_reg",
+  "epochs": null,
+  "bench": 0,
+  "eval_only": false,
+  "limit": null,
+  "n_boot": 1000,
+  "config": null,
+  "set": [
+   "dropout=0.5",
+   "weight_decay=0.1",
+   "venom_label_smoothing=0.1",
+   "crop_scale=[0.25, 1.0]"
+  ]
+ },
+ "config": {
+  "seed": 42,
+  "snakeclef": {
+   "base_url": "http://ptak.felk.cvut.cz/plants/plants/SnakeCLEF2023",
+   "root": "/Users/ameenahsan/snakeguard-data/snakeclef",
+   "meta_dir": "/Users/ameenahsan/snakeguard-data/snakeclef/meta",
+   "image_dir": "/Users/ameenahsan/snakeguard-data/snakeclef/images",
+   "manifest": "/Users/ameenahsan/snakeguard-data/snakeclef/manifest.csv",
+   "archives": {
+    "train": "SnakeCLEF2023-train-small_size.tar.gz",
+    "val": "SnakeCLEF2023-val-small_size.tar.gz"
+   },
+   "metadata": {
+    "train": "SnakeCLEF2023-TrainMetadata-iNat.csv",
+    "val": "SnakeCLEF2023-ValMetadata.csv"
+   },
+   "venom_list": "venomous_status_list.csv",
+   "cap_venomous": 100,
+   "cap_harmless": 25,
+   "split_frac": {
+    "train": 0.7,
+    "valid": 0.15,
+    "test": 0.15
+   }
+  },
+  "train": {
+   "backbone": "efficientnet_b0",
+   "img_size": 224,
+   "epochs": 10,
+   "batch": 64,
+   "lr": 0.001,
+   "weight_decay": 0.1,
+   "warmup_epochs": 1,
+   "species_loss_weight": 0.5,
+   "label_smoothing": 0.1,
+   "venom_label_smoothing": 0.1,
+   "dropout": 0.5,
+   "crop_scale": [
+    0.25,
+    1.0
+   ],
+   "workers": 6,
+   "device": "auto",
+   "target_recall": 0.95,
+   "out_dir": "/Users/ameenahsan/Documents/SnakeDetection_XAI/results/venom_clf"
+  }
+ },
+ "torch": "2.14.1",
+ "device": "mps"
+}
