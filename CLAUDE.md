@@ -76,7 +76,9 @@ scripts/
   copy_data_out_of_icloud.py   Machine B only: move data/snakeclef out of iCloud
   eval_venom_on_crops.py       B5: venom classifier on detector crops (+context margins) vs whole images
   app.py                       B5: Gradio demo app (Photo + Video tabs) -> http://127.0.0.1:7860
-report/                        A_methods.md, A_results.md (Member A report drafts), B_results.md (Member B)
+  venom_species_report.py      B6: per-species venom recall (default: India's Big Four), Wilson CIs
+  make_app_figure.py           B6: report figure of the app's photo analysis -> results/app/
+report/                        A_methods.md, A_results.md (Member A report drafts), B_results.md, B_report.md (Member B)
 tests/                         pytest. test_model.py needs best.pt + dataset (marked gpu)
 results/                       all outputs (large, don't share blindly)
 ```

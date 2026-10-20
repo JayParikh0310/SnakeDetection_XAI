@@ -14,7 +14,8 @@ Statuses: `TODO` · `IN PROGRESS (A|B)` · `BLOCKED (reason)` · `DONE (date)`.
   write-up `report/B_results.md`). Recommended app explainer for venom alerts: LayerCAM ms (same as A's detector choice).
   **B5 DONE 2026-10-20.** App: `.venv/bin/python scripts/app.py` → http://127.0.0.1:7860 (Photo + Video tabs; logic in
   `src/snakeguard/demo.py`). The app uses `PipelineConfig.venom_crop_margin = 0.25` and `TorchVenomClassifier(rescale=True)`
-  (decision line at 0.5, so the threat score reflects venom status). Next: B6 (report sections), J1/J2 with Jay.
+  (decision line at 0.5, so the threat score reflects venom status). **B6 draft DONE 2026-10-20:** `report/B_report.md`
+  (6 items marked [check] to confirm against the proposal / primary sources). Next: J1/J2 with Jay; PR #1 review + PROGRESS.md conflict.
   **For Jay:** `pipeline.py` gained an optional `venom_crop_margin` (default 0.0 = your original crop; tested equal) and a
   `venom_crop()` helper. Jay's commit `6555ff7` (Review-2 reports) is on origin and not yet pulled into B's checkout:
   B's uncommitted `PROGRESS.md` also rewrote the "Current state" block → expect a small merge conflict there.
@@ -52,7 +53,7 @@ Statuses: `TODO` · `IN PROGRESS (A|B)` · `BLOCKED (reason)` · `DONE (date)`.
 | B3 | Classifier explainers (shared `Explainer`) | B | DONE (2026-10-20) | `venom/xai.py`: eigencam, gradcam, gradcampp (last stage), gradcampp_ms, layercam_ms (stages 3/5/8), integrated_gradients, occlusion, rise, lime, kernelshap, random. `build_classifier_explainers()`. Figures: `scripts/make_venom_figures.py` |
 | B4 | Classifier XAI benchmark (A's harness) | B | DONE (2026-10-20) | `results/venom_xai_bench/test_final/analysis/summary.md`; write-up `report/B_results.md` §4–5 |
 | B5 | Demo app (Gradio) on A's pipeline | B | DONE (2026-10-20) | `scripts/app.py`, `src/snakeguard/demo.py`, `tests/test_demo.py` (10 tests). Photo tab verified in the browser; Video tab tested by unit test only |
-| B6 | Report: intro, lit review, classifier, app, ethics | B | TODO | |
+| B6 | Report: intro, lit review, classifier, app, ethics | B | DRAFT DONE (2026-10-20) | `report/B_report.md` (~3,800 words; complements A's Review-2 doc); figure `results/app/app_examples.png`; Big-Four table `results/venom_clf/b0_reg/species_report_test.md`. 6 [check] items open |
 | J1, J2 | Joint discussion, final report | A+B | TODO | |
 
 ## Key results
@@ -78,6 +79,7 @@ Statuses: `TODO` · `IN PROGRESS (A|B)` · `BLOCKED (reason)` · `DONE (date)`.
 | Venom XAI sanity (head randomization ↓) | Grad-CAM 0.02 (passes) · LayerCAM ms 0.81 · IG 0.85 · Grad-CAM++ 0.96 · Eigen-CAM 1.00 | `.../analysis/summary.csv` | 2026-10-20 |
 | Classifier "no-evidence" output | P(venomous | all-gray image) = 0.143 ≈ threshold 0.141 → deletion/insertion uninformative for harmless decisions | `scripts/run_venom_xai_bench.py` (blank_score column) | 2026-10-20 |
 | Venom clf on detector crops (test, 522 imgs with a detected snake) | venomous recall: whole image 0.952 · tight crop 0.917 · +25 % context 0.944 · +50 % 0.948 · +100 % 0.952 | `results/venom_clf/b0_reg/crop_eval_test.md` | 2026-10-20 |
+| India's Big Four, test recall at the deployed threshold | cobra 0.96 (n 25) · saw-scaled viper 0.93 (15) · Russell's viper 0.80 (20) · **common krait 0.75 (16)** | `results/venom_clf/b0_reg/species_report_test.md` | 2026-10-20 |
 | Lit-review comparison (mAP50) | Ref 4: 90.2 %, Ref 5: 94.5 %, Ref 8: 93.4 % (different datasets, snake-only) | proposal | |
 
 ## Findings so far (for the report)
@@ -107,6 +109,16 @@ Statuses: `TODO` · `IN PROGRESS (A|B)` · `BLOCKED (reason)` · `DONE (date)`.
      quantitative test is what settles it.
 
 ## Session log (newest first)
+### 2026-10-20 (i) — Member B's agent
+- B1–B5 committed by the user on branch `member-b-venom` (0f2a06e), pushed, PR JayParikh0310/SnakeDetection_XAI#1
+  opened with Jay as reviewer. It conflicts with Jay's `6555ff7` in PROGRESS.md; the user left the conflict for Jay.
+- B6: read Jay's Review-2 docx (from origin/master) so B's sections complement it. Its §3.8 promised a focus on
+  India's Big Four → new `scripts/venom_species_report.py` (Wilson CIs): cobra 0.96, saw-scaled viper 0.93,
+  Russell's viper 0.80, **common krait 0.75 [0.51, 0.90]**. New `scripts/make_app_figure.py` → `results/app/app_examples.png`.
+- `report/B_report.md`: venom-stage intro, literature review (species/venom ID, classifier XAI and its evaluation),
+  dataset, classifier, classifier XAI, app, ethics & safety, limitations, references. 6 [check] markers (proposal's
+  reviewed systems, krait/India burden sources, SnakeCLEF licence, one author list). 85 non-gpu tests green.
+- Not done: nothing committed since 0f2a06e (B6 files, test additions, PROGRESS/CLAUDE/PLAN updates are uncommitted).
 ### 2026-10-20 (h) — Member B's agent (resumed)
 - User decisions: (1) crop context as an **optional pipeline setting**; (2) **rescale the venom score in B's classifier**.
 - `pipeline.py` (A's file, additive): `PipelineConfig.venom_crop_margin` (default 0.0) + `venom_crop()`; with 0.0 it is

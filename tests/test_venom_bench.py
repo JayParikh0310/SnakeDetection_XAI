@@ -69,3 +69,12 @@ def test_box_to_crop_and_deletion_with_identity_letterbox():
     r = M.deletion_insertion(Score(), x, lb, 1, good, steps=10, deletion_fill="black", insertion_start="black")
     rb = M.deletion_insertion(Score(), x, lb, 1, 1 - good, steps=10, deletion_fill="black", insertion_start="black")
     assert r["deletion"].auc < rb["deletion"].auc
+
+
+def test_wilson_interval():
+    from venom_species_report import wilson
+    lo, hi = wilson(12, 16)
+    assert 0 < lo < 12 / 16 < hi < 1
+    assert wilson(16, 16)[1] == pytest.approx(1.0) and wilson(0, 16)[0] == pytest.approx(0.0, abs=1e-12)
+    assert np.isnan(wilson(0, 0)[0])
+    assert wilson(120, 160)[1] - wilson(120, 160)[0] < hi - lo   # more data -> narrower
