@@ -15,7 +15,7 @@ Statuses: `TODO` · `IN PROGRESS (A|B)` · `BLOCKED (reason)` · `DONE (date)`.
   **B5 DONE 2026-10-20.** App: `.venv/bin/python scripts/app.py` → http://127.0.0.1:7860 (Photo + Video tabs; logic in
   `src/snakeguard/demo.py`). The app uses `PipelineConfig.venom_crop_margin = 0.25` and `TorchVenomClassifier(rescale=True)`
   (decision line at 0.5, so the threat score reflects venom status). **B6 draft DONE 2026-10-20:** `report/B_report.md`
-  (6 items marked [check] to confirm against the proposal / primary sources). Next: J1/J2 with Jay; PR #1 review + PROGRESS.md conflict.
+  (1 item left marked [check]: official MoHFW protocol citation). Next: J1/J2 with Jay; PR #1 review + PROGRESS.md conflict.
   **For Jay:** `pipeline.py` gained an optional `venom_crop_margin` (default 0.0 = your original crop; tested equal) and a
   `venom_crop()` helper. Jay's commit `6555ff7` (Review-2 reports) is on origin and not yet pulled into B's checkout:
   B's uncommitted `PROGRESS.md` also rewrote the "Current state" block → expect a small merge conflict there.
@@ -109,6 +109,14 @@ Statuses: `TODO` · `IN PROGRESS (A|B)` · `BLOCKED (reason)` · `DONE (date)`.
      quantitative test is what settles it.
 
 ## Session log (newest first)
+### 2026-10-21 — Member B's agent
+- B6 committed by the user (ab0ef9c) and pushed to PR #1.
+- Closed 5 of 6 [check] items in `report/B_report.md`: installed `poppler` (Homebrew) and read the proposal PDF
+  (`pdftotext`); §2.1 now has a table of the proposal's identification systems (Refs 1, 2, 3, 5 from its matrix:
+  data, method, results, limitations; VenoScan's inconsistent accuracy noted; Serpent-ID also uses SnakeCLEF 2023).
+  Verified Bolon et al. 2020 and Suraweera et al. 2020 (eLife, ~58,000 deaths/yr in India) with DOIs; SnakeCLEF
+  states no dataset licence (wording updated). Open: official MoHFW protocol citation for the Big Four statement.
+- Machine B note: `pdftotext`/`pdftoppm` now available (`brew install poppler`), so agents can read the proposal PDF.
 ### 2026-10-20 (i) — Member B's agent
 - B1–B5 committed by the user on branch `member-b-venom` (0f2a06e), pushed, PR JayParikh0310/SnakeDetection_XAI#1
   opened with Jay as reviewer. It conflicts with Jay's `6555ff7` in PROGRESS.md; the user left the conflict for Jay.

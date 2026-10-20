@@ -2,8 +2,8 @@
 
 *Draft text for the final report (B6). It complements Member A's Review-2 document (`report/SnakeGuard_Review2.docx`:
 problem context, objectives, detection dataset, detector methodology) and `report/A_methods.md` / `A_results.md`.
-All numbers come from scripts in this project; the full result tables are in `report/B_results.md`. Items marked
-**[check]** need confirming against the proposal PDF or a primary source before submission.*
+All numbers come from scripts in this project; the full result tables are in `report/B_results.md`. The one item
+marked **[check]** needs a primary source before submission (references verified 2026-10-21).*
 
 ---
 
@@ -40,16 +40,29 @@ country-to-species mapping, and a per-species flag for **medically important ven
 penalises the confusion of a venomous species with a harmless one more than other errors. The 2024 edition kept the
 development data and extended the test set with new regions.
 
-The systems reviewed in the project proposal include work that classifies snakes as venomous or non-venomous
-(VenoScan, Prasad et al., 2025), CNN-based species identification (Dube & Bhuru, 2022) and a mobile identification
-app (Serpent-ID, Bharath et al., 2026) **[check: summarise their data, metrics and limitations from the proposal]**.
-Two gaps recur across this literature and motivate our design:
+Four of the eight systems reviewed in the project proposal (its literature matrix, References 1–8) address the
+identification side of the problem:
 
-- **Accuracy is reported, the cost asymmetry rarely is.** Accuracy or macro-F1 treats a missed cobra like a misnamed
-  rat snake. For a warning device the operating point must be chosen for venomous recall, and the price paid in false
-  alarms must be reported.
-- **Explanations, where shown at all, are illustrative.** None of the reviewed systems tests whether its saliency maps
-  are faithful, so a plausible heatmap gives no assurance that the model uses the snake rather than the background.
+| System | Data | Method | Reported result | Limitation relevant here |
+|---|---|---|---|---|
+| Shivaraj et al. (2024), Ref 1 | ~1,000 snake images | YOLOv8 on video, WhatsApp alerts | all-class F1 ≈ 0.65; separates venomous / non-venomous | snake-only data, single-frame, no threat scoring |
+| VenoScan, Prasad et al. (2025), Ref 2 | Kaggle "Snake Dataset-India", 2,043 images, 4 snake types | fine-tuned DenseNet121, web app | accuracy reported inconsistently: 98.73 % (abstract) vs 82.73–90 % (results); recall 0.86 / 0.93 | static images only, 4 types, no detection stage |
+| Dube & Bhuru (2022), Ref 3 | 1,500 images, 8 Southern African species | YOLOv5 → TFLite Android app | 71 % accuracy, mAP@0.5 0.713; confuses similar species (mole snake vs night adder) | small dataset (~150 images per class) |
+| Serpent-ID, Bharath et al. (2026), Ref 5 | 12,000 images, 35 medically significant Indian species (SnakeCLEF 2023 + public sources) | quantized YOLOv8-nano, Flutter app with first aid and hospital locator | mAP@0.5 94.5 %, 94 % species ID (n = 200) | accuracy drops below ~100 training images per species; no independent venom stage |
+
+These results are not directly comparable with ours: they cover 4 to 35 species and report accuracy or mAP, while we
+classify venom status over 1,784 species and report recall at a fixed safety operating point. Serpent-ID's observation
+that accuracy falls for species with fewer than ~100 images matches our setting (at most 25 images per harmless species,
+100 per venomous one) and our per-species errors (Section 4). Three gaps recur and motivate the design of this stage:
+
+- **Accuracy is reported, the cost asymmetry is not.** Accuracy, F1 or mAP treat a missed cobra like a misnamed rat
+  snake. For a warning device the operating point must be chosen for venomous recall, and the price paid in false
+  alarms must be reported. None of the four systems does this; VenoScan's inconsistent figures show how fragile a
+  single headline accuracy can be.
+- **Narrow species coverage.** Four to 35 species is far from the diversity a device meets in the field; species not
+  in training are silently forced into one of the known classes.
+- **No validation of what the model attends to.** As the proposal notes for all eight systems, none examines whether
+  the model looks at the snake (head shape, pattern) or at background cues, so its errors remain unexplained.
 
 ### 2.2 Explainability for image classifiers
 
@@ -147,8 +160,9 @@ discusses what this means for users.
 | Russell's viper (*Daboia russelii*) | 61 | 20 | 0.80 [0.58, 0.92] |
 | Common krait (*Bungarus caeruleus*) | 68 | 16 | **0.75 [0.51, 0.90]** |
 
-The common krait, a nocturnal snake that is one of the main causes of snakebite deaths in India **[check: cite a
-primary epidemiological source]**, is the weakest of the four. A regional deployment would need more krait images and
+The common krait is one of the four species held responsible for most venomous bites in India, and it typically
+bites at night, often people sleeping on the floor **[check: cite the official MoHFW National Snakebite Management
+Protocol for the Big Four statement; only secondary summaries were reachable on 2026-10-21]**. It is the weakest of the four here. A regional deployment would need more krait images and
 a region-specific threshold (Section 8).
 
 **From photographs to detector crops.** In the pipeline the classifier receives the detector's snake box, not a
@@ -245,13 +259,14 @@ system has not been clinically or field validated.
 mostly reflects where the snake is, not why it was judged venomous. The application says so ("shows where the model
 looked, not proof of the species"), and the audit mode exposes the slower, model-agnostic methods for a cross-check.
 
-**Bias and fairness across regions.** The training data are dominated by the Americas and Australia; India, the
-country with the highest number of snakebite deaths **[check: cite a primary source]**, provides 4.2 % of training images. Performance varies by
+**Bias and fairness across regions.** The training data are dominated by the Americas and Australia; India, where
+an estimated 58,000 people die of snakebite every year (Suraweera et al., 2020), provides 4.2 % of training images. Performance varies by
 species, and the weakest of the Big Four is the krait. Results should be reported per region and per medically
 important species before any deployment, and the threshold set for the target region.
 
 **Data provenance and licences.** SnakeCLEF images come from iNaturalist and HerpMapper contributors, who choose their
-own licences **[check: confirm the SnakeCLEF 2023 terms of use]**. The images are used for research only and are not
+own licences. The SnakeCLEF 2023 task pages state no separate dataset licence (checked 2026-10-21), so the images
+remain under their contributors' terms. The images are used for research only and are not
 redistributed: the repository contains only the sampling manifest, metrics and derived figures; the images stay on the
 member's machine. Only the country code from the metadata is used; no precise locations are processed.
 
@@ -284,10 +299,10 @@ advice for every snake are a first mitigation; field studies would be needed to 
 ## References (venom stage; detector references are in Member A's document)
 
 - Adebayo, J., Gilmer, J., Muelly, M., Goodfellow, I., Hardt, M. & Kim, B. (2018). Sanity checks for saliency maps. *NeurIPS*.
-- Bharath et al. (2026). Serpent-ID: A deep learning-based mobile application for rapid snake identification. *ICSFT* (reviewed in the proposal).
-- Bolon, I., Durso, A. M., Botero Mesa, S., Ray, N., Alcoba, G., Chappuis, F. & Ruiz de Castañeda, R. (2020). Identifying the snake: First scoping review on practices of communities and healthcare providers confronted with snakebite across the world. *PLoS ONE* 15(3): e0229989. **[check author list]**
+- Bharath et al. (2026). Serpent-ID: A deep learning-based mobile application for rapid snake identification and bite management guidance. *ICSFT* (reviewed in the proposal, Ref 5).
+- Bolon, I., Durso, A. M., Botero Mesa, S., Ray, N., Alcoba, G., Chappuis, F. & Ruiz de Castañeda, R. (2020). Identifying the snake: First scoping review on practices of communities and healthcare providers confronted with snakebite across the world. *PLoS ONE* 15(3): e0229989. https://doi.org/10.1371/journal.pone.0229989
 - Chattopadhay, A., Sarkar, A., Howlader, P. & Balasubramanian, V. N. (2018). Grad-CAM++: Generalized gradient-based visual explanations for deep convolutional networks. *WACV*.
-- Dube & Bhuru (2022). Snake identification system using convolutional neural networks. *ZCICT* (reviewed in the proposal).
+- Dube & Bhuru (2022). Snake identification system using convolutional neural networks. *ZCICT* (reviewed in the proposal, Ref 3).
 - Durso, A. M., Moorthy, G. K., Mohanty, S. P., Bolon, I., Salathé, M. & Ruiz de Castañeda, R. (2021). Supervised learning computer vision benchmark for snake species identification from photographs: Implications for herpetology and global health. *Frontiers in Artificial Intelligence* 4: 582110.
 - Gutiérrez, J. M., Calvete, J. J., Habib, A. G., Harrison, R. A., Williams, D. J. & Warrell, D. A. (2017). Snakebite envenoming. *Nature Reviews Disease Primers* 3: 17063.
 - Hooker, S., Erhan, D., Kindermans, P.-J. & Kim, B. (2019). A benchmark for interpretability methods in deep neural networks. *NeurIPS*.
@@ -296,9 +311,11 @@ advice for every snake are a first mitigation; field studies would be needed to 
 - Muhammad, M. B. & Yeasin, M. (2020). Eigen-CAM: Class activation map using principal components. *IJCNN*.
 - Petsiuk, V., Das, A. & Saenko, K. (2018). RISE: Randomized input sampling for explanation of black-box models. *BMVC*.
 - Picek, L., Hrúz, M., Durso, A. M. & Bolon, I. (2023). Overview of SnakeCLEF 2023: Snake identification in medically important scenarios. *CLEF 2023 Working Notes*, CEUR-WS.
-- Prasad et al. (2025). VenoScan: AI-powered classification of venomous and non-venomous snakes. *ISACC* (reviewed in the proposal).
+- Prasad et al. (2025). VenoScan: AI-powered classification of venomous and non-venomous snakes. *ISACC* (reviewed in the proposal, Ref 2).
 - Ribeiro, M. T., Singh, S. & Guestrin, C. (2016). "Why should I trust you?": Explaining the predictions of any classifier. *KDD*.
 - Selvaraju, R. R., Cogswell, M., Das, A., Vedantam, R., Parikh, D. & Batra, D. (2017). Grad-CAM: Visual explanations from deep networks via gradient-based localization. *ICCV*.
+- Suraweera, W., Warrell, D., Whitaker, R., Menon, G., Rodrigues, R., Fu, S. H., Begum, R., Sati, P., Piyasena, K., Bhatia, M., Brown, P. & Jha, P. (2020). Trends in snakebite deaths in India from 2000 to 2019 in a nationally representative mortality study. *eLife* 9: e54076. https://doi.org/10.7554/eLife.54076
+- Shivaraj et al. (2024). Real-time snake detection and alert system. *IJERT* 13(5) (reviewed in the proposal, Ref 1).
 - Sturmfels, P., Lundberg, S. & Lee, S.-I. (2020). Visualizing the impact of feature attribution baselines. *Distill*.
 - Sundararajan, M., Taly, A. & Yan, Q. (2017). Axiomatic attribution for deep networks. *ICML*.
 - Tan, M. & Le, Q. V. (2019). EfficientNet: Rethinking model scaling for convolutional neural networks. *ICML*.
