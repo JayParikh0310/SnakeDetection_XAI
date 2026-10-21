@@ -2,6 +2,7 @@
 # then:  pip install -r requirements.txt  &&  pip install -e .
 # grad-cam is only used as a reference implementation in tests/debugging.
 grad-cam==1.5.7
+gradio==6.30.0          # Member B: demo app (scripts/app.py)
 matplotlib==3.11.2
 numpy==2.5.2
 opencv-python==5.0.0.93

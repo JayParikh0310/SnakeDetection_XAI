@@ -1,5 +1,7 @@
 # --- Python environment (machine-specific, rebuild from requirements.txt) ---
 .venv/
+# .venv may also be a symlink to a venv outside iCloud (Member B, macOS)
+.venv
 venv/
 env/
 
@@ -15,6 +17,8 @@ dist/
 # --- Dataset (23k images, share separately e.g. via Drive) ---
 final_dataset_v4/
 data/
+# data may also be a symlink to a folder outside iCloud (Member B, macOS)
+data
 *.cache
 
 # --- Large / regenerable results (summary tables, analysis and figures stay tracked) ---
@@ -26,6 +30,7 @@ results/detector_eval/data_resolved.yaml
 results/xai_verification/*.done
 results/xai_bench/*_pytest_*/
 results/xai_bench/valid_smoke/
+results/venom_clf/*/last.pt
 
 # --- Ultralytics default output folders ---
 runs/

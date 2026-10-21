@@ -1,0 +1,46 @@
+# Member B: venom classifier data + training settings. Paths are relative to the project root.
+seed: 42
+
+snakeclef:
+  base_url: http://ptak.felk.cvut.cz/plants/plants/SnakeCLEF2023   # HTTPS has a self-signed cert
+  root: data/snakeclef                 # gitignored
+  meta_dir: data/snakeclef/meta
+  image_dir: data/snakeclef/images     # = <root>/images/<image_path from the metadata>
+  manifest: data/snakeclef/manifest.csv
+  archives:                            # 240 px (max side) versions
+    train: SnakeCLEF2023-train-small_size.tar.gz
+    val: SnakeCLEF2023-val-small_size.tar.gz
+  metadata:
+    train: SnakeCLEF2023-TrainMetadata-iNat.csv
+    val: SnakeCLEF2023-ValMetadata.csv
+  venom_list: venomous_status_list.csv # class_id -> MIVS (1 = medically important venomous snake)
+  # Per-species image caps. Whole observations are sampled until the cap is reached, so all photos
+  # of one observation stay together. Venomous species get a higher cap to reduce the 1:5 imbalance.
+  cap_venomous: 100
+  cap_harmless: 25
+  # Split by observation within each species (same observation never in two splits).
+  split_frac: {train: 0.70, valid: 0.15, test: 0.15}
+
+train:
+  backbone: efficientnet_b0      # torchvision, ImageNet-pretrained
+  img_size: 224
+  epochs: 10                     # ~10 min/epoch on an M4 (GPU-bound, ~60 img/s)
+  batch: 64
+  lr: 1.0e-3
+  weight_decay: 0.05
+  warmup_epochs: 1
+  species_loss_weight: 0.5       # auxiliary 1,784-way species head
+  label_smoothing: 0.1           # species head only
+  venom_label_smoothing: 0.0     # venom head (BCE target y*(1-e)+e/2)
+  dropout: 0.2                   # before both heads
+  crop_scale: [0.35, 1.0]        # RandomResizedCrop: mimics detector crops
+  workers: 6
+  device: auto                   # cuda > mps > cpu
+  target_recall: 0.95            # threshold chosen on valid for this venomous recall
+  out_dir: results/venom_clf
+
+xai:                             # B3 classifier explainers (src/snakeguard/venom/xai.py)
+  occlusion: {patch_sizes: [32, 64], stride_frac: 0.5, batch: 64}
+  rise: {n_masks: 1000, grid: 7, p: 0.5, batch: 64}
+  surrogate: {grid: 8, n_samples: 1000, batch: 64}   # LIME + KernelSHAP: 8x8 patch grid
+  integrated_gradients: {steps: 32, sigma: 4.0, batch: 16}

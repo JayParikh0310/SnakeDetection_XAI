@@ -28,6 +28,9 @@ demo app.
 ## 3. Environment
 
 - Machine A: Windows 11, RTX 4060 Laptop 8 GB, Python 3.12. Venv at `.venv/`.
+- Machine B: macOS, Apple M4 16 GB (MPS, no CUDA), Python 3.12. `.venv` is a symlink to `~/venvs/snakeguard-xai`
+  (see the iCloud gotcha in §8). Run with `.venv/bin/python`.
+  Install torch from PyPI (not the cu126 index). ~20 GB free disk: keep B's data small.
 - Setup: see the header of `requirements.txt` (CUDA torch first, then `pip install -r requirements.txt`, then `pip install -e .`).
 - Run everything with `.venv/Scripts/python` (Windows) from the project root.
 - On Windows, bash loops over the 23k dataset files time out. Use Python for file ops.
@@ -38,6 +41,7 @@ demo app.
 
 ```
 configs/default.yaml           all paths + hyperparameters (detector, XAI, eval)
+configs/venom.yaml             Member B: venom dataset (SnakeCLEF 2023 subset) + classifier settings
 src/snakeguard/
   __init__.py                  load_config(), CLASS_NAMES, PROJECT_ROOT
   data.py                      dataset reader (boxes + polygons)
@@ -51,6 +55,9 @@ src/snakeguard/
   eval/metrics.py              deletion/insertion, pointing game, EBPG, IoU, agreement, randomization, noise
   eval/matching.py             detection <-> GT matching (TP / confusion / FP / FN)
   pipeline.py                  SnakeGuard runtime pipeline + VenomClassifier interface (for B)
+  demo.py                      B5: SnakeGuardDemo (photo/video analysis for the app, testable without Gradio)
+  venom/                       B: data.py (manifest, transforms), model.py (VenomNet), classifier.py (TorchVenomClassifier)
+                               xai.py (classifier explainers, build_classifier_explainers)
 scripts/
   eval_detector.py             A1 baseline eval -> results/detector_eval/
   run_xai_bench.py             A4/A5 benchmark (resumable) -> results/xai_bench/<split>_<tag>/
@@ -59,7 +66,19 @@ scripts/
   eval_xai_verification.py     can explanations flag wrong detections? -> results/xai_verification/
   retry.sh                     restart a resumable GPU script after crashes
   run_rest_offline.sh          unattended chain: test bench -> analysis -> figures -> verification
-report/                        A_methods.md, A_results.md (Member A report drafts)
+  build_venom_dataset.py       B1: SnakeCLEF subset manifest (--plan) + streamed image extraction (--extract) -> data/snakeclef/
+  train_venom.py               B2: train/evaluate VenomNet (resumable; --set overrides, --limit smoke) -> results/venom_clf/<tag>/
+  compare_venom_scores.py      B2: compare runs x scores (venom/species/mean) on valid, paired bootstrap
+  finalize_venom.py            B2: lock score + valid threshold into best.pt, report test once
+  make_venom_figures.py        B3: qualitative grids of the classifier explainers (valid) -> <run>/figures/
+  run_venom_xai_bench.py        B4: classifier XAI bench (A's metrics; resumable) -> results/venom_xai_bench/<split>_<tag>/
+  analyze_venom_bench.py       B4: tables/plots (run with PYTHONPATH=scripts; reuses analyze_bench.py)
+  copy_data_out_of_icloud.py   Machine B only: move data/snakeclef out of iCloud
+  eval_venom_on_crops.py       B5: venom classifier on detector crops (+context margins) vs whole images
+  app.py                       B5: Gradio demo app (Photo + Video tabs) -> http://127.0.0.1:7860
+  venom_species_report.py      B6: per-species venom recall (default: India's Big Four), Wilson CIs
+  make_app_figure.py           B6: report figure of the app's photo analysis -> results/app/
+report/                        A_methods.md, A_results.md (Member A report drafts), B_results.md, B_report.md (Member B)
 tests/                         pytest. test_model.py needs best.pt + dataset (marked gpu)
 results/                       all outputs (large, don't share blindly)
 ```
@@ -78,6 +97,9 @@ p(cls) − p(other class).
 
 **Venom classifier** (B → pipeline): subclass `pipeline.VenomClassifier` and implement
 `predict(crop_rgb) -> P(venomous) or None`.
+The crop is `pipeline.venom_crop(frame, box, PipelineConfig.venom_crop_margin)` (default margin 0.0 = tight box;
+the app uses 0.25). `TorchVenomClassifier(rescale=True)` returns a monotone score with its decision line at 0.5
+(use `clf.threshold` as `PipelineConfig.venom_threshold` either way).
 
 **Benchmark CSV** (`metrics.csv`): one row per (image, target, method). Columns: kind, det_cls,
 gt_cls, score, runtime_ms, empty_map, del_auc(_norm), ins_auc(_norm), pg/ebpg/iou _box/_poly,
@@ -134,3 +156,10 @@ stability, sanity_head/neck/all.
   through `bash scripts/retry.sh <log> <tries> .venv/Scripts/python scripts/<resumable script> ...`.
   Check `nvidia-smi` first.
 - Eigen-CAM uses eigh on CPU (a^T a), not CUDA SVD, because of the cuSOLVER failures above.
+- **macOS + iCloud Drive (Machine B):** the project sits in `~/Documents`, which iCloud syncs. iCloud sets the
+  `hidden` flag on files inside dot-folders like `.venv`, and Python ≥ 3.12.13 skips hidden `.pth` files, so the
+  editable install (`import snakeguard`) silently breaks. Keep the venv outside iCloud and symlink it as `.venv`.
+  iCloud also **evicts** big folders to the cloud when the disk is full (dataless files that DataLoader workers can't
+  read). So the dataset lives in `~/snakeguard-data` too, symlinked as `data/`. Keep big outputs out of `~/Documents`.
+- SnakeCLEF 2023's 240 px train archive lacks 199 images listed in its metadata. Use `available == True` from
+  `data/snakeclef/manifest.csv`. Don't re-run `--extract --force` hoping to find them (it re-streams 4.8 GB).

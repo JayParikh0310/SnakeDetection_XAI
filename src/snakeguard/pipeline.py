@@ -47,6 +47,11 @@ class PipelineConfig:
     w_venom: float = 0.4
     venom_unknown: float = 1.0
     venom_threshold: float = 0.5
+    # venom crop: the detector box grown by this fraction of its size on each side (Member B, 2026-10-20).
+    # 0.0 = tight box (original behaviour). The venom classifier was trained on whole photos; on detector crops
+    # its venomous recall drops (0.952 -> 0.917), a 0.25 margin restores most of it (0.944), see
+    # results/venom_clf/b0_reg/crop_eval_test.md. The demo app uses 0.25.
+    venom_crop_margin: float = 0.0
     # beep interval (ms) from threat 0 → 100
     beep_slow_ms: int = 1500
     beep_fast_ms: int = 150
@@ -84,6 +89,17 @@ def resolve_conflicts(dets: list[Detection], iou_thr: float, margin: float) -> l
                 snake, look = (i, j) if a.cls == SNAKE else (j, i)
                 drop.add(snake if dets[look].score > dets[snake].score + margin else look)
     return [d for k, d in enumerate(dets) if k not in drop]
+
+
+def venom_crop(frame_rgb: np.ndarray, box, margin: float = 0.0) -> np.ndarray:
+    """Crop for the venom classifier: the box grown by `margin` x its width/height on each side, clipped to the frame."""
+    h, w = frame_rgb.shape[:2]
+    x0, y0, x1, y1 = np.asarray(box, np.float64)
+    bw, bh = x1 - x0, y1 - y0
+    x0, x1 = max(0.0, x0 - margin * bw), min(float(w), x1 + margin * bw)
+    y0, y1 = max(0.0, y0 - margin * bh), min(float(h), y1 + margin * bh)
+    x0, y0, x1, y1 = np.round([x0, y0, x1, y1]).astype(int)
+    return frame_rgb[y0:y1, x0:x1]
 
 
 def proximity(area_frac: float, cfg: PipelineConfig) -> float:
@@ -126,8 +142,7 @@ class SnakeGuard:
 
         snakes = []
         for d in (d for d in dets if d.cls == SNAKE):
-            x0, y0, x1, y1 = np.round(d.box).astype(int)
-            crop = frame_rgb[max(y0, 0):y1, max(x0, 0):x1]
+            crop = venom_crop(frame_rgb, d.box, c.venom_crop_margin)
             pv = self.clf.predict(crop) if crop.size else None
             a = area(d)
             pr = proximity(a, c)
