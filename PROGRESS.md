@@ -121,6 +121,25 @@ Statuses: `TODO` · `IN PROGRESS (A|B)` · `BLOCKED (reason)` · `DONE (date)`.
      quantitative test is what settles it.
 
 ## Session log (newest first)
+### 2026-10-22 — Member A's agent
+- Merged `member-b-venom` into master (user committed): PROGRESS.md conflict resolved; `demo.py` video writer falls back
+  avc1 → mp4v (Windows has no openh264), test updated. 104 passed, 2 skipped (SnakeCLEF data / gradio at the time).
+- Installed `gradio==6.30.0` on Machine A; app (`scripts/app.py`) verified on CUDA: photo, audit mode, video.
+- Presentation material: `SHOWCASE.html` (one offline page with all results + demo guide), `results/demo_samples/`
+  (5 snakes, 5 look-alikes from test, checked; `demo_clip.mp4`), `report/DEMO_STEPS.md` (live demo script),
+  `scripts/make_comparison_folder.py` → `results/XAI_COMPARISON/` (all comparison figures numbered + table PNGs).
+- **Live tab** in the app (user request): `demo.LiveSession` (one pipeline per browser session, so 3-of-5 confirmation
+  runs across webcam frames; HUD with threat meter, beep rate, confirmation dots; optional LayerCAM overlay) and
+  `scripts/app.py` (streaming `gr.Image`, every 100 ms; stats panel; Web Audio beeper in `BEEP_JS` driven by the
+  pipeline's beep interval, 1400 Hz when the venom alert is on, 880 Hz otherwise, silent after 1.5 s without frames).
+  +3 tests (108 passed, 1 skipped). Browser test with a fake webcam (headless Edge): far snake → beep every 688 ms,
+  same snake closer → 487 ms, gone → silent; ~73 ms/frame (~5 fps), ~180-230 ms with the heatmap.
+- Live sound curve (user request): `demo.live_beep_ms` — ~1.2 s gaps at low threat, power curve to ~70 ms, and a
+  **continuous tone at threat ≥ 65** (`LIVE_CONTINUOUS_AT`). Live tab only; the pipeline's beep_interval_ms (1500→150 ms,
+  Photo/Video tabs, Review-2 docs) is unchanged. Browser test: far venomous snake → 99 ms beeps, close → continuous.
+- Video tab fix: uploads/outputs showed "video not playable" on Windows because the writer fell back to mp4v (no browser
+  plays it). `_open_writer` now tries H.264 mp4 → **VP8 WebM** → mp4v and returns the real path; `demo_clip.mp4`
+  re-encoded to H.264 (ffmpeg). Browser test: input preview and annotated output both play. 109 passed, 1 skipped.
 ### 2026-10-21 — Member B's agent
 - B6 committed by the user (ab0ef9c) and pushed to PR #1.
 - Closed 5 of 6 [check] items in `report/B_report.md`: installed `poppler` (Homebrew) and read the proposal PDF

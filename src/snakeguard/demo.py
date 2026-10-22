@@ -11,6 +11,7 @@ the "not a substitute for expert or medical advice" notice.
 """
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -30,6 +31,27 @@ DISCLAIMER = ("**Research prototype.** SnakeGuard can miss snakes and mislabel s
 DET_EXPLAINER, DET_AUDIT = "layercam", "occlusion"
 # Venom crop context: detector box grown by 25 % per side (test recall 0.917 tight -> 0.944, crop_eval_test.md)
 VENOM_CROP_MARGIN = 0.25
+# Live-tab sound (user request, 2026-10-22): normal beeping at low threat that speeds up and merges into one continuous
+# tone at high threat (venomous + close). Live tab only; the pipeline's documented beep_interval_ms (1500 -> 150 ms,
+# used by the Photo/Video tabs) is unchanged. The threat is capped by detector confidence (~0.8 -> max ~80 in practice),
+# hence the continuous tone already from 65.
+LIVE_CONTINUOUS_AT = 65.0
+LIVE_SLOW_MS, LIVE_FAST_MS = 1500, 70
+
+
+def live_beep_ms(threat: float) -> int | None:
+    """None = silent, 0 = continuous tone, else ms between beeps. Power curve: ~1 s gaps at low threat, accelerating
+    sharply towards LIVE_CONTINUOUS_AT (threat 30 -> ~640 ms, 50 -> ~230 ms, 60 -> ~100 ms, >= 65 -> continuous)."""
+    if threat <= 0:
+        return None
+    if threat >= LIVE_CONTINUOUS_AT:
+        return 0
+    f = (1 - threat / LIVE_CONTINUOUS_AT) ** 1.5
+    return int(round(LIVE_FAST_MS + (LIVE_SLOW_MS - LIVE_FAST_MS) * f))
+
+
+def beep_text(ms: int | None) -> str:
+    return "silent" if ms is None else "CONTINUOUS" if ms == 0 else f"beep {ms} ms"
 VENOM_EXPLAINER, VENOM_AUDIT = "layercam_ms", "rise"
 
 
@@ -95,13 +117,16 @@ def annotate(frame: np.ndarray, res: FrameResult, threshold: float) -> np.ndarra
     return out
 
 
-def _open_writer(out_path: str, fps: float, size: tuple[int, int]) -> cv2.VideoWriter:
-    """H.264 (plays in browsers) when OpenCV has an encoder for it, else mp4v. Windows OpenCV wheels ship without
-    openh264, so avc1 fails to open there and would silently write an empty file."""
-    for fourcc in ("avc1", "mp4v"):
-        writer = cv2.VideoWriter(out_path, cv2.VideoWriter_fourcc(*fourcc), fps, size)
+def _open_writer(out_path: str, fps: float, size: tuple[int, int]) -> tuple[cv2.VideoWriter, str]:
+    """Open a browser-playable video writer; returns (writer, actual path). H.264 mp4 where OpenCV has an encoder for
+    it (macOS), else VP8 WebM: Windows OpenCV wheels ship without openh264 and mp4v plays in no browser ("video not
+    playable" in the app). mp4v only as a last resort. The extension follows the codec."""
+    stem = str(Path(out_path).with_suffix(""))
+    for fourcc, ext in (("avc1", ".mp4"), ("VP80", ".webm"), ("mp4v", ".mp4")):
+        path = stem + ext
+        writer = cv2.VideoWriter(path, cv2.VideoWriter_fourcc(*fourcc), fps, size)
         if writer.isOpened():
-            return writer
+            return writer, path
         writer.release()
     raise RuntimeError(f"cannot open a video writer for {out_path}")
 
@@ -208,7 +233,7 @@ class SnakeGuardDemo:
     # ------------------------------------------------------------------ video
     def analyze_video(self, path: str, out_path: str, target_fps: float = 5.0, max_seconds: float = 30.0):
         """Process a video at ~target_fps through the pipeline with 3-of-5 confirmation. Writes an annotated mp4
-        (H.264, or mp4v where no H.264 encoder is available) and returns (out_path, timeline rows)."""
+        (H.264 mp4, or VP8 WebM where no H.264 encoder is available) and returns (actual out_path, timeline rows)."""
         cap = cv2.VideoCapture(path)
         if not cap.isOpened():
             raise ValueError(f"cannot open video {path}")
@@ -231,7 +256,7 @@ class SnakeGuardDemo:
                     frame = self._banner(frame, banner, res.threat, res.confirmed and bool(snakes))
                     if writer is None:
                         h, w = frame.shape[:2]
-                        writer = _open_writer(out_path, fps / step, (w, h))
+                        writer, out_path = _open_writer(out_path, fps / step, (w, h))
                     writer.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
                     rows.append({"time_s": round(i / fps, 2), "snakes": len(snakes), "lookalikes": n_look,
                                  "confirmed": res.confirmed, "threat": round(res.threat, 1),
@@ -246,6 +271,10 @@ class SnakeGuardDemo:
             raise ValueError("no frames could be read from the video")
         return out_path, rows
 
+    # ------------------------------------------------------------------ live (webcam stream)
+    def live_session(self) -> "LiveSession":
+        return LiveSession(self)
+
     @staticmethod
     def _banner(frame: np.ndarray, text: str, threat: float, alert: bool) -> np.ndarray:
         out = frame.copy()
@@ -254,4 +283,88 @@ class SnakeGuardDemo:
         cv2.rectangle(out, (0, 0), (out.shape[1], h), color, -1)
         scale = max(0.45, out.shape[1] / 1400)
         cv2.putText(out, text[:90], (8, int(h * 0.7)), cv2.FONT_HERSHEY_SIMPLEX, scale, (255, 255, 255), 1, cv2.LINE_AA)
+        return out
+
+
+class LiveSession:
+    """Webcam stream (Live tab): one pipeline whose 3-of-5 temporal confirmation persists across frames, so it behaves
+    like the ankle camera. `step()` returns the annotated frame (boxes, banner, threat HUD) and the numbers for the UI
+    and the browser beeper."""
+
+    def __init__(self, demo: SnakeGuardDemo):
+        self.demo = demo
+        self.guard = demo.guard(photo=False, explainer=demo.det_explainer(DET_EXPLAINER))
+        self.n = 0
+        self.fps = 0.0
+        self._t_prev: float | None = None
+
+    def reset(self):
+        self.guard.reset()
+        self.n, self.fps, self._t_prev = 0, 0.0, None
+
+    def step(self, frame_rgb: np.ndarray, heatmap: bool = False) -> tuple[np.ndarray, dict]:
+        frame_rgb = np.ascontiguousarray(frame_rgb[..., :3])
+        t0 = time.perf_counter()
+        res = self.guard.process(frame_rgb, explain=heatmap)
+        latency_ms = 1000 * (time.perf_counter() - t0)
+        now = time.perf_counter()
+        if self._t_prev is not None:   # smoothed frames per second actually processed
+            dt = max(now - self._t_prev, 1e-3)
+            self.fps = 1 / dt if self.fps == 0 else 0.8 * self.fps + 0.2 / dt
+        self._t_prev = now
+        self.n += 1
+
+        snakes = self.demo._snakes(res)
+        n_look = sum(d.cls == LOOKALIKE for d in res.detections)
+        base = frame_rgb
+        if heatmap and res.explanation:
+            base = overlay(frame_rgb, res.explanation["saliency"], alpha=0.4)
+        frame = annotate(base, res, self.demo.threshold)
+        alert = res.confirmed and bool(snakes)
+        frame = self.demo._banner(frame, verdict_text(snakes, n_look, res.confirmed), res.threat, alert)
+        beep = live_beep_ms(res.threat)
+        frame = self._hud(frame, res, beep, list(self.guard.history), self.guard.cfg.window)
+
+        top = snakes[0] if snakes else None
+        info = {
+            "frame": self.n, "snakes": len(snakes), "lookalikes": n_look,
+            "confirmed": res.confirmed, "seen": int(sum(self.guard.history)), "window": self.guard.cfg.window,
+            "k": self.guard.cfg.k_confirm, "threat": round(res.threat, 1), "beep_ms": beep,
+            "venom_alert": res.venomous_alert,
+            "venom_label": top.venom_label if top else "", "venom_score": None if top is None or top.p_venom is None
+            else round(top.p_venom, 2), "det_score": round(top.det_score, 2) if top else None,
+            "proximity": round(top.proximity, 2) if top else None,
+            "latency_ms": round(latency_ms), "fps": round(self.fps, 1), "size": f"{frame_rgb.shape[1]}×{frame_rgb.shape[0]}",
+            "mass_in_box": round(res.explanation["mass_in_box"], 2) if res.explanation else None,
+        }
+        return frame, info
+
+    @staticmethod
+    def _hud(frame: np.ndarray, res: FrameResult, beep_ms: int | None, history: list[bool], window: int) -> np.ndarray:
+        """Bottom bar: threat meter, beep rate and the confirmation dots (x of the last 5 frames had a snake)."""
+        out = frame.copy()
+        H, W = out.shape[:2]
+        h = max(30, H // 12)
+        y0 = H - h
+        cv2.rectangle(out, (0, y0), (W, H), (25, 25, 25), -1)
+        scale = max(0.45, W / 1400)
+        pad = max(6, h // 5)
+        mx0, mx1 = int(W * 0.28), int(W * 0.60)          # threat meter
+        cv2.rectangle(out, (mx0, y0 + pad), (mx1, H - pad), (80, 80, 80), -1)
+        fill = int(mx0 + (mx1 - mx0) * res.threat / 100)
+        t = res.threat / 100
+        color = (int(60 + 180 * t), int(190 * (1 - t) + 40), 40)   # green -> red
+        if fill > mx0:
+            cv2.rectangle(out, (mx0, y0 + pad), (fill, H - pad), color, -1)
+        cv2.putText(out, f"THREAT {res.threat:.0f}/100", (8, y0 + int(h * 0.65)), cv2.FONT_HERSHEY_SIMPLEX, scale,
+                    (255, 255, 255), 1, cv2.LINE_AA)
+        beep = beep_text(beep_ms)
+        cv2.putText(out, beep, (mx1 + 10, y0 + int(h * 0.65)), cv2.FONT_HERSHEY_SIMPLEX, scale, (255, 255, 255), 1,
+                    cv2.LINE_AA)
+        r = max(3, h // 7)                                # confirmation dots, oldest left, newest right
+        hist = [None] * (window - len(history)) + history  # None = no frame yet
+        on = (230, 60, 60) if res.confirmed else (240, 200, 60)
+        for i, seen in enumerate(hist):
+            c = (W - (window - i) * 3 * r - 4, y0 + h // 2)
+            cv2.circle(out, c, r, on if seen else (150, 150, 150), -1 if seen else 1, cv2.LINE_AA)
         return out

@@ -63,11 +63,12 @@ def test_photo_on_real_image_if_available(demo):
 
 def test_video_roundtrip(demo, tmp_path):
     src = tmp_path / "in.mp4"
-    w = _open_writer(str(src), 10, (160, 120))  # avc1, or mp4v where H.264 is missing (Windows)
+    w, src = _open_writer(str(src), 10, (160, 120))  # H.264 mp4, or VP8 webm where H.264 is missing (Windows)
     for i in range(20):
         w.write(np.full((120, 160, 3), 40 + 5 * i, np.uint8))
     w.release()
-    out, rows = demo.analyze_video(str(src), str(tmp_path / "out.mp4"), target_fps=5)
+    out, rows = demo.analyze_video(src, str(tmp_path / "out.mp4"), target_fps=5)
+    assert out.endswith((".mp4", ".webm")) and not out.endswith("in.mp4")
     assert len(rows) == 10 and all(r["snakes"] == 0 and r["threat"] == 0 for r in rows)
     cap = cv2.VideoCapture(out)
     assert cap.isOpened() and int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) == 10
@@ -153,3 +154,59 @@ def test_classifier_rescale_option(tmp_path):
     harmless, venomous_raw = threat_score(0.9, 0.5, 0.0, c), threat_score(0.9, 0.5, 0.15, c)
     venomous_rescaled = threat_score(0.9, 0.5, rescale_score(0.15, 0.14), c)
     assert venomous_raw - harmless < 6 and venomous_rescaled - harmless > 18
+
+
+# ------------------------------------------------------------------ Live tab (webcam stream, 2026-10-22)
+def test_live_empty_frames_are_silent(demo):
+    s = demo.live_session()
+    img = np.full((240, 320, 3), 128, np.uint8)
+    for i in range(3):
+        out, info = s.step(img)
+    assert out.shape == img.shape and info["frame"] == 3
+    assert info["threat"] == 0 and info["beep_ms"] is None and not info["confirmed"] and info["seen"] == 0
+    s.reset()
+    assert s.n == 0 and len(s.guard.history) == 0
+
+
+def test_live_confirmation_and_proximity_on_sample():
+    """3-of-5 confirmation across stream frames, and a closer (bigger) snake raises proximity. Uses the real models
+    and the demo sample (skipped when the sample or the venom checkpoint is missing)."""
+    sample = PROJECT_ROOT / "results" / "demo_samples" / "snake_1.jpg"
+    ck = PROJECT_ROOT / "results" / "venom_clf" / "b0_reg" / "best.pt"
+    if not sample.exists() or not ck.exists():
+        pytest.skip("demo sample / venom checkpoint not available")
+    d = SnakeGuardDemo(venom_checkpoint=str(ck), device="cpu")
+    img = cv2.cvtColor(cv2.imread(str(sample)), cv2.COLOR_BGR2RGB)
+    far = np.full_like(img, 90)
+    small = cv2.resize(img, None, fx=0.5, fy=0.5)
+    far[:small.shape[0], :small.shape[1]] = small
+    s = d.live_session()
+    infos = [s.step(far)[1] for _ in range(3)]
+    assert [i["confirmed"] for i in infos] == [False, False, True]          # alert only from the 3rd frame
+    assert infos[0]["threat"] == 0 and infos[0]["beep_ms"] is None
+    assert infos[2]["threat"] > 0 and infos[2]["beep_ms"] is not None
+    near = s.step(img, heatmap=True)[1]
+    assert near["proximity"] > infos[2]["proximity"] and near["mass_in_box"] is not None
+    assert near["threat"] > infos[2]["threat"] and near["beep_ms"] < infos[2]["beep_ms"]   # closer -> faster beep
+    for _ in range(3):
+        gone = s.step(np.full_like(img, 90))[1]
+    assert gone["threat"] == 0 and gone["beep_ms"] is None                   # snake left -> silent
+
+
+def test_live_panel_and_app_live_tab(demo):
+    pytest.importorskip("gradio")
+    sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
+    from app import BEEP_JS, live_panel
+    assert "Waiting" in live_panel(None) and "sgBeepSet" in BEEP_JS
+    s = demo.live_session()
+    _, info = s.step(np.full((240, 320, 3), 128, np.uint8))
+    html = live_panel(info)
+    assert "Clear" in html and "silent" in html
+
+
+def test_live_beep_curve_merges_into_continuous_tone():
+    from snakeguard.demo import LIVE_CONTINUOUS_AT, live_beep_ms
+    assert live_beep_ms(0) is None                                   # safe -> silent
+    ms = [live_beep_ms(t) for t in range(1, int(LIVE_CONTINUOUS_AT))]
+    assert all(a >= b for a, b in zip(ms, ms[1:])) and ms[0] > 1000 and ms[-1] < 100   # faster and faster
+    assert live_beep_ms(LIVE_CONTINUOUS_AT) == 0 and live_beep_ms(100) == 0            # 0 = continuous tone

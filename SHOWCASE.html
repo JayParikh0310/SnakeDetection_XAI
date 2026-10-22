@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SnakeGuard Showcase</title>
+<!-- Open this file in a browser from the project folder. Works offline: every image is a relative link into results/. -->
+<style>
+:root{--bg:#f6f7f4;--card:#fff;--ink:#1d2421;--muted:#5d6b64;--accent:#2c5f2d;--accent2:#c0392b;--line:#d9e0d6;--soft:#eef3ea;--best:#dff0d8;--bad:#fbe3e0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121614;--card:#1b211e;--ink:#e6ece8;--muted:#9aa8a1;--accent:#7cc47e;--accent2:#ff8a7a;--line:#2d3732;--soft:#202a24;--best:#1f3a24;--bad:#3d2320}}
+:root[data-theme="dark"]{--bg:#121614;--card:#1b211e;--ink:#e6ece8;--muted:#9aa8a1;--accent:#7cc47e;--accent2:#ff8a7a;--line:#2d3732;--soft:#202a24;--best:#1f3a24;--bad:#3d2320}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Segoe UI",system-ui,sans-serif}
+nav{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);display:flex;gap:4px;flex-wrap:wrap;padding:8px 16px;align-items:center}
+a{color:var(--accent)}
+nav b{color:var(--accent);margin-right:12px}
+nav a{color:var(--ink);text-decoration:none;padding:5px 10px;border-radius:6px;font-size:14px}
+nav a:hover{background:var(--soft)}
+nav button{margin-left:auto;background:none;border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:4px 10px;cursor:pointer}
+main{max-width:1200px;margin:0 auto;padding:16px}
+section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 24px;margin:18px 0}
+h1{margin:8px 0 2px;font-size:30px}
+h2{margin:0 0 6px;color:var(--accent);font-size:23px}
+h3{margin:20px 0 6px;font-size:17px}
+.sub{color:var(--muted);margin:0 0 12px}
+.say{background:var(--soft);border-left:4px solid var(--accent);padding:10px 14px;border-radius:6px;margin:12px 0}
+.say::before{content:"Say: ";font-weight:700;color:var(--accent)}
+code,pre{font-family:Consolas,monospace;background:var(--soft);border-radius:5px}
+code{padding:1px 5px}
+pre{padding:12px;overflow-x:auto;font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+figure{margin:0}
+figure img{width:100%;border:1px solid var(--line);border-radius:8px;cursor:zoom-in;background:#fff}
+figcaption{font-size:13.5px;color:var(--muted);margin-top:4px}
+.wide img{max-height:none}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:6px 0}
+th,td{border:1px solid var(--line);padding:6px 9px;text-align:left;white-space:nowrap}
+th{background:var(--soft)}
+tr.best td{background:var(--best);font-weight:600}
+tr.bad td{background:var(--bad)}
+tr.base td{color:var(--muted);font-style:italic}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:10px 0}
+.kpi{background:var(--soft);border-radius:10px;padding:10px 12px}
+.kpi b{display:block;font-size:24px;color:var(--accent)}
+.kpi span{font-size:13px;color:var(--muted)}
+ol li,ul li{margin:4px 0}
+#lb{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:9;cursor:zoom-out;padding:16px}
+#lb img{max-width:100%;max-height:100%;background:#fff}
+@media (max-width:640px){section{padding:14px 16px}h1{font-size:24px}}
+</style>
+</head>
+<body>
+<nav>
+  <b>SnakeGuard</b>
+  <a href="#plan">Show order</a><a href="#demo">Live demo</a><a href="#detector">Detector</a>
+  <a href="#xai">XAI comparison</a><a href="#visual">Heatmaps</a><a href="#venom">Venom + its XAI</a><a href="#app">App output</a><a href="#files">Where files are</a>
+  <button id="theme" title="Toggle light/dark">◐</button>
+</nav>
+<main>
+
+<h1>SnakeGuard: detection, explainability and demo</h1>
+<p class="sub">Jay Vishal Parikh (24BAI0143) · Fida M S (24BAI0180). Every number on this page comes from the files in <code>results/</code>. Click any image to enlarge it.</p>
+
+<section id="plan">
+<h2>Suggested order for the review (about 15 min)</h2>
+<ol>
+  <li><b>Live demo first (3 min)</b>: open the app, upload a snake and then a look-alike, show both heatmaps. See <a href="#demo">Live demo</a>.</li>
+  <li><b>Detector (1 min)</b>: mAP and "no snake/look-alike confusions on test".</li>
+  <li><b>XAI comparison, detector (5 min)</b>: the deletion/insertion table, the bar charts, and the 7-method heatmap grid. <i>Jay</i></li>
+  <li><b>Venom classifier + its XAI (4 min)</b>: recall 95 %, its XAI comparison, the same winner. <i>Fida</i></li>
+  <li><b>Conclusion (1 min)</b>: LayerCAM (multi-scale) is the default explainer, and occlusion is the slow audit check.</li>
+</ol>
+</section>
+
+<section id="demo">
+<h2>Live demo</h2>
+<p class="sub">Start the app before the review starts (it loads in about 10 s). Close games and other GPU apps first.</p>
+<pre>cd C:\Users\jaypa\Desktop\Jay\Projects\SnakeDetection_XAI
+.venv\Scripts\python scripts\app.py</pre>
+<p>Then open <b><a href="http://127.0.0.1:7860" target="_blank">http://127.0.0.1:7860</a></b>. Sample inputs are in <code>results\demo_samples\</code> (checked, all detected correctly):</p>
+<div class="tbl"><table>
+<tr><th>File</th><th>What it shows</th><th>Result we got</th></tr>
+<tr><td>snake_1.jpg</td><td>green vine snake at night</td><td>snake 0.80, venom flag, threat 73</td></tr>
+<tr><td>snake_4.jpg</td><td>coiled red snake</td><td>snake 0.76, venom flag, threat 74</td></tr>
+<tr><td>snake_3.jpg</td><td>snake on asphalt</td><td>snake 0.85, likely harmless, threat 53</td></tr>
+<tr><td>lookalike_2.jpg</td><td>mangrove roots</td><td>3 look-alikes, no alert, threat 0</td></tr>
+<tr><td>lookalike_3.jpg</td><td>rope underwater</td><td>look-alike, no alert, threat 0</td></tr>
+<tr><td>demo_clip.mp4 (Video tab)</td><td>look-alike → snake → look-alike → snake</td><td>alert only when a snake has been seen in 3 of the last 5 frames</td></tr>
+</table></div>
+<ul>
+  <li><b>Photo tab:</b> upload, then click <b>Analyze</b>. It shows boxes, the verdict, the threat and beep rate, the detector heatmap ("why it fired") and the venom heatmap.</li>
+  <li>Tick <b>Audit mode</b> to add occlusion + RISE (slower, about 5 s), to show that two different method families agree.</li>
+  <li>The first photo after starting takes about 4 s (GPU warm-up); after that it's well under 1 s.</li>
+  <li><b>Live tab:</b> click the camera → allow → <b>Record</b>, click the page once (for sound), then hold a snake photo (on a phone) in front of the camera. Move it closer and the threat rises and it beeps faster; a cable or rope gives no alert.</li>
+  <li>The Video tab processes up to 30 s at about 5 fps. On Windows the console prints an "OpenH264" error. That's harmless: it falls back to another codec.</li>
+</ul>
+<p>If the app fails during the review, show the <a href="#app">pre-made app output</a> below instead.</p>
+</section>
+
+<section id="detector">
+<h2>Detector (YOLO11n): test set, 841 images</h2>
+<div class="kpis">
+  <div class="kpi"><b>0.865</b><span>mAP@50 (test)</span></div>
+  <div class="kpi"><b>0.617</b><span>mAP@50-95</span></div>
+  <div class="kpi"><b>0.925 / 0.805</b><span>AP50 snake / look-alike</span></div>
+  <div class="kpi"><b>0</b><span>snake ↔ look-alike confusions on test</span></div>
+</div>
+<div class="say">Errors are misses of small objects and box granularity, not mixing snakes up with ropes or roots.</div>
+<div class="grid">
+  <figure><img src="results/detector_eval/ultralytics_test/confusion_matrix_normalized.png" alt="Confusion matrix"><figcaption>Normalized confusion matrix (test)</figcaption></figure>
+  <figure><img src="results/detector_eval/ultralytics_test/BoxPR_curve.png" alt="PR curve"><figcaption>Precision-recall curve per class</figcaption></figure>
+  <figure><img src="results/detector_eval/ultralytics_test/val_batch0_pred.jpg" alt="Predictions"><figcaption>Example predictions on test images</figcaption></figure>
+</div>
+</section>
+
+<section id="xai">
+<h2>XAI comparison on the detector: 868 detections, test set</h2>
+<p class="sub">Nine explainers and two baselines, all scored with the same metrics. <b>Deletion</b>: remove the most important pixels first; the score should drop fast (lower = better). <b>Insertion</b>: add them back to a blurred image; the score should rise fast (higher = better). <b>Sanity</b>: randomize the head weights; a real explanation should change (lower = better).</p>
+<div class="tbl"><table>
+<tr><th>Method</th><th>Family</th><th>Deletion ↓</th><th>Insertion ↑</th><th>Pointing game ↑</th><th>Energy in box ↑</th><th>Sanity (head) ↓</th><th>Time</th></tr>
+<tr class="best"><td>LayerCAM (P3–P5)</td><td>gradient</td><td>0.082</td><td>0.765</td><td>0.970</td><td>0.898</td><td>0.27</td><td>27 ms</td></tr>
+<tr><td>Occlusion</td><td>perturbation</td><td>0.077</td><td>0.846</td><td>0.974</td><td>0.711</td><td>0.10</td><td>1,238 ms</td></tr>
+<tr><td>D-RISE</td><td>perturbation</td><td>0.080</td><td>0.816</td><td>0.983</td><td>0.744</td><td>–</td><td>4,233 ms</td></tr>
+<tr><td>Grad-CAM++ (P3–P5)</td><td>gradient</td><td>0.152</td><td>0.577</td><td>0.402</td><td>0.439</td><td>0.86</td><td>28 ms</td></tr>
+<tr class="bad"><td>Grad-CAM++ (P5 only)</td><td>gradient</td><td>0.364</td><td>0.485</td><td>0.245</td><td>0.235</td><td>0.03</td><td>27 ms</td></tr>
+<tr><td>Grad-CAM</td><td>gradient</td><td>0.216</td><td>0.449</td><td>0.445</td><td>0.437</td><td>0.07</td><td>38 ms</td></tr>
+<tr class="bad"><td>Eigen-CAM</td><td>activation</td><td>0.244</td><td>0.438</td><td>0.263</td><td>0.400</td><td>1.00</td><td>43 ms</td></tr>
+<tr class="base"><td>Random map</td><td>baseline</td><td>0.204</td><td>0.295</td><td>0.403</td><td>0.394</td><td>–</td><td>5 ms</td></tr>
+<tr class="base"><td>Box prior</td><td>baseline</td><td>0.162</td><td>0.782</td><td>1.000</td><td>0.911</td><td>–</td><td>13 ms</td></tr>
+</table></div>
+<p class="sub">Source: <code>results/xai_bench/test_final/analysis/summary.md</code> (95 % bootstrap CIs and Wilcoxon tests are there too).</p>
+<div class="say">Occlusion is the most faithful but takes over a second per explanation. LayerCAM is almost as faithful, localizes best and is 45× faster, so it is the real-time default. Eigen-CAM is worse than random on deletion and doesn't change when the head is randomized (1.00), so it doesn't explain the decision. Multi-scale beats P5-only Grad-CAM++ (0.152 vs 0.364, p = 2×10⁻¹⁰³); P5-only is empty for 53 % of detections.</div>
+<div class="grid">
+  <figure><img src="results/xai_bench/test_final/analysis/bars_del_auc_norm.png" alt="Deletion bars"><figcaption>Deletion AUC (lower = more faithful)</figcaption></figure>
+  <figure><img src="results/xai_bench/test_final/analysis/bars_ins_auc_norm.png" alt="Insertion bars"><figcaption>Insertion AUC (higher = more faithful)</figcaption></figure>
+  <figure><img src="results/xai_bench/test_final/analysis/curves_TP.png" alt="Curves"><figcaption>Average deletion/insertion curves (true positives)</figcaption></figure>
+  <figure><img src="results/xai_bench/test_final/analysis/bars_runtime_ms.png" alt="Runtime"><figcaption>Runtime per explanation</figcaption></figure>
+  <figure><img src="results/xai_bench/test_final/analysis/bars_ebpg_box.png" alt="EBPG"><figcaption>Share of saliency inside the box (energy pointing game)</figcaption></figure>
+  <figure><img src="results/xai_bench/test_final/analysis/agreement.png" alt="Agreement"><figcaption>Method agreement (Spearman): two clusters, {Eigen-CAM, Grad-CAM++} vs {LayerCAM, occlusion, D-RISE}</figcaption></figure>
+</div>
+<h3>Can the explanation flag a wrong detection?</h3>
+<p>AUROC for spotting false detections: confidence alone <b>0.900</b> → confidence + XAI features <b>0.906</b> (+0.006, 95 % CI [0.002, 0.010]). It helps slightly, but the gain is small. Source: <code>results/xai_verification/summary.md</code>.</p>
+</section>
+
+<section id="visual">
+<h2>Heatmaps side by side</h2>
+<p class="sub">Each row is one detection explained by every method. The look-alike rows (mangrove roots) are matched with similar snake rows.</p>
+<div class="say">Look at Eigen-CAM: it lights up the whole scene and the borders. LayerCAM, occlusion and D-RISE follow the snake's body.</div>
+<figure class="wide"><img src="results/figures/test/pairs_00.png" alt="Matched pairs"><figcaption>Matched snake vs look-alike pairs: detection, Eigen-CAM, Grad-CAM++ (P3–P5), Grad-CAM++ (P5), LayerCAM, occlusion, D-RISE</figcaption></figure>
+<div class="grid" style="margin-top:14px">
+  <figure><img src="results/figures/test/pairs_01.png" alt="Pairs 2"><figcaption>More matched pairs</figcaption></figure>
+  <figure><img src="results/figures/test/grid_TP_snake.png" alt="TP snakes"><figcaption>Correct snake detections, all methods</figcaption></figure>
+  <figure><img src="results/figures/test/grid_TP_snake_like_object.png" alt="TP look-alikes"><figcaption>Correct look-alike detections</figcaption></figure>
+  <figure><img src="results/figures/test/grid_FP_snake.png" alt="FP"><figcaption>Wrong "snake" detections: what the model looked at</figcaption></figure>
+</div>
+</section>
+
+<section id="venom">
+<h2>Venom classifier and its XAI (Member B)</h2>
+<p class="sub">EfficientNet-B0 trained on SnakeCLEF 2023 (50,441 images, 1,784 species, 285 medically important venomous). Split by observation; threshold chosen on valid; test evaluated once.</p>
+<div class="kpis">
+  <div class="kpi"><b>0.888</b><span>test AUROC</span></div>
+  <div class="kpi"><b>95.3 %</b><span>venomous recall (the safety target)</span></div>
+  <div class="kpi"><b>56.5 %</b><span>specificity (harmless correctly cleared)</span></div>
+  <div class="kpi"><b>0.944</b><span>recall on detector crops + 25 % margin</span></div>
+</div>
+<div class="say">We deliberately accept false alarms: missing a venomous snake is much worse than warning about a harmless one.</div>
+<div class="tbl"><table>
+<tr><th>Method (venomous decisions, n = 160)</th><th>Deletion ↓</th><th>Insertion ↑</th><th>Snake-box pointing ↑</th><th>Sanity (head) ↓</th><th>Time</th></tr>
+<tr><td>Grad-CAM++ (3 scales)</td><td>0.840</td><td>1.088</td><td>0.937</td><td>0.78</td><td>70 ms</td></tr>
+<tr class="best"><td>LayerCAM (3 scales)</td><td>0.850</td><td>1.208</td><td>0.993</td><td>0.80</td><td>67 ms</td></tr>
+<tr><td>Grad-CAM</td><td>0.890</td><td>1.329</td><td>0.951</td><td>0.02</td><td>64 ms</td></tr>
+<tr><td>Occlusion</td><td>0.902</td><td>1.217</td><td>0.761</td><td>–</td><td>1,684 ms</td></tr>
+<tr><td>RISE / LIME / KernelSHAP (n = 60)</td><td>0.86–0.91</td><td>1.49–1.53</td><td>0.87–0.98</td><td>–</td><td>~8,000 ms</td></tr>
+<tr class="bad"><td>Eigen-CAM</td><td>1.053</td><td>1.036</td><td>0.993</td><td>1.00</td><td>208 ms</td></tr>
+<tr class="base"><td>Random</td><td>1.090</td><td>1.027</td><td>0.606</td><td>–</td><td>0.4 ms</td></tr>
+</table></div>
+<p class="sub">Source: <code>results/venom_xai_bench/test_final/analysis/summary.md</code>, write-up in <code>report/B_results.md</code>. Insertion &gt; 1 is possible because scores are normalized by the original probability.</p>
+<div class="say">The same pattern as the detector: multi-scale CAMs beat single-layer ones, and Eigen-CAM fails the sanity check. So the app uses LayerCAM for both stages.</div>
+<figure class="wide"><img src="results/venom_clf/b0_reg/figures/grid_TP.png" alt="Venom XAI grid"><figcaption>11 explainers on correctly flagged venomous snakes</figcaption></figure>
+<div class="grid" style="margin-top:14px">
+  <figure><img src="results/venom_xai_bench/test_final/analysis/bars_del_auc_norm.png" alt="Venom deletion"><figcaption>Deletion AUC, venom classifier</figcaption></figure>
+  <figure><img src="results/venom_xai_bench/test_final/analysis/bars_ins_auc_norm.png" alt="Venom insertion"><figcaption>Insertion AUC, venom classifier</figcaption></figure>
+  <figure><img src="results/venom_clf/b0_reg/figures/grid_FN.png" alt="Missed venomous"><figcaption>Missed venomous snakes (false negatives)</figcaption></figure>
+</div>
+<p>India's Big Four, test recall: cobra 0.96 · saw-scaled viper 0.93 · Russell's viper 0.80 · <b>common krait 0.75</b> (weakest; small sample). Source: <code>results/venom_clf/b0_reg/species_report_test.md</code>.</p>
+</section>
+
+<section id="app">
+<h2>What the app shows (backup if the live demo fails)</h2>
+<figure class="wide"><img src="results/app/app_examples.png" alt="App examples" style="max-width:760px;display:block;margin:auto"><figcaption>Per photo: verdict + threat, why the detector fired (LayerCAM), and why the venom call was made (LayerCAM multi-scale)</figcaption></figure>
+</section>
+
+<section id="files">
+<h2>Where everything is saved</h2>
+<div class="tbl"><table>
+<tr><th>What</th><th>Folder / file</th></tr>
+<tr><td><b>All XAI comparison tables + graphs, numbered in presenting order</b></td><td><code>results/XAI_COMPARISON/</code></td></tr>
+<tr><td>Live demo step-by-step</td><td><code>report/DEMO_STEPS.md</code></td></tr>
+<tr><td>Detector metrics, confusion, PR curves</td><td><code>results/detector_eval/</code></td></tr>
+<tr><td>Detector XAI comparison (tables, charts, stats)</td><td><code>results/xai_bench/test_final/analysis/</code></td></tr>
+<tr><td>Heatmap grids and matched pairs</td><td><code>results/figures/test/</code></td></tr>
+<tr><td>Can XAI flag wrong detections?</td><td><code>results/xai_verification/summary.md</code></td></tr>
+<tr><td>Venom classifier metrics + figures</td><td><code>results/venom_clf/b0_reg/</code></td></tr>
+<tr><td>Venom XAI comparison</td><td><code>results/venom_xai_bench/test_final/analysis/</code></td></tr>
+<tr><td>App screenshots, demo samples</td><td><code>results/app/</code>, <code>results/demo_samples/</code></td></tr>
+<tr><td>Written results</td><td><code>report/A_results.md</code>, <code>report/B_results.md</code>, <code>report/B_report.md</code></td></tr>
+<tr><td>Review 2 deck, doc, script</td><td><code>report/SnakeGuard_Review2_15slides.pptx</code>, <code>SnakeGuard_Review2.docx</code>, <code>SnakeGuard_Review2_Script.docx</code></td></tr>
+</table></div>
+</section>
+</main>
+<div id="lb"><img alt=""></div>
+<script>
+const lb=document.getElementById("lb"),lbi=lb.querySelector("img");
+document.querySelectorAll("figure img").forEach(i=>i.onclick=()=>{lbi.src=i.src;lb.style.display="flex"});
+lb.onclick=()=>lb.style.display="none";
+document.addEventListener("keydown",e=>{if(e.key==="Escape")lb.style.display="none"});
+const root=document.documentElement;
+document.getElementById("theme").onclick=()=>{const dark=root.dataset.theme?root.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;root.dataset.theme=dark?"light":"dark"};
+</script>
+</body>
+</html>
